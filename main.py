@@ -15,10 +15,10 @@ from bs4 import BeautifulSoup,NavigableString
 
 
 
-def initialize_webdriver(chrome_profile_path):
+def initialize_webdriver(selector):
     option = Options()
     # option.add_argument("--headless")
-    option.add_argument(f"user-data-dir={chrome_profile_path}")  # Use your actual profile path 
+    option.add_argument(f"user-data-dir={selector['chrome_profile_path']}")  # Use your actual profile path 
     option.add_experimental_option("detach", False)
     driver = webdriver.Chrome(options=option)
     driver.implicitly_wait(1)
@@ -27,11 +27,16 @@ def initialize_webdriver(chrome_profile_path):
     driver.get(url)
     return driver
 
+def config():
+    with open('config.json') as f:
+        data = json.load(f)
+        return data['XPATH']
+         
 def create_post_data(channel, image_url, post_text, postTime, Number_of_rection):
     return{
         "Source_link":channel,
-        "Post_text":image_url,
-        "Post_image":post_text,
+        "Post_text":post_text,
+        "Post_image":image_url,
         "Post_time":postTime,
         "Post_reaction":Number_of_rection,
         "Post_scraping_time":date_time()
@@ -52,9 +57,9 @@ def date_time():
     date_now = formatted_date.strftime("%Y-%m-%d %H:%M:%S")
     return date_now
 
-def number_of_new_posts(driver):
+def number_of_new_posts(driver,selector):
     try:
-        number_of_new_posts = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "//div[@class='_ahlk']/span"))).text
+        number_of_new_posts = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, selector['number_of_new_posts']))).text
         print(number_of_new_posts.text)
         return number_of_new_posts
         # //p[@class='selectable-text copyable-text x15bjb6t x1n2onr6']//span[@class='selectable-text copyable-text false']    
@@ -62,22 +67,22 @@ def number_of_new_posts(driver):
         number_of_new_posts = 1
         return number_of_new_posts        
 
-def click_on_search_result(driver):
-    click_on_search_result = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "//span[@class='matched-text _ao3e']")))
+def click_on_search_result(driver,selector):
+    click_on_search_result = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, selector['click_on_search_result'])))
     click_on_search_result.click()
     time.sleep(3)
 
     try:
-        click_on_Down_Arrow = WebDriverWait(driver, 3).until(EC.presence_of_element_located((By.XPATH, "//span[@class='x1h7gb8d x1rg5ohu xq77vm1']")))
+        click_on_Down_Arrow = WebDriverWait(driver, 3).until(EC.presence_of_element_located((By.XPATH, selector['click_on_Down_Arrow'])))
         click_on_Down_Arrow.click()
         time.sleep(1)
     except:
         pass
 
-def collect_post(driver):
+def collect_post(driver,selector):
     try:
         all_posts = set()
-        all_posts = driver.find_elements(By.XPATH, "//div[@class='_amjv _aotl']")  # //div[@class="x1y332i5 x1n2onr6 x6ikm8r x10wlt62"]/div   #b //div[@class='xlm9qay x1w7sdjq x1fcty0u xw2npq5']  Number of reaction.
+        all_posts = driver.find_elements(By.XPATH, selector['all_posts_elements'])  # //div[@class="x1y332i5 x1n2onr6 x6ikm8r x10wlt62"]/div   #b //div[@class='xlm9qay x1w7sdjq x1fcty0u xw2npq5']  Number of reaction.
         print("Number of last posts:", len(all_posts))
         return all_posts
     except:
@@ -85,9 +90,9 @@ def collect_post(driver):
         all_posts = None
         return all_posts
 
-def Reactions(post_element):
+def Reactions(post_element,selector):
     try:
-        reaction = post_element.find_element(By.XPATH, ".//button[@class='xo0jvv6']")
+        reaction = post_element.find_element(By.XPATH, selector['reaction'])
         aria_label_value_of_rection = reaction.get_attribute("aria-label")
         # Use regex to find the number before 'in total'
         match = re.search(r'(\d{1,3}(?:,\d{3})*)(?= in total)', aria_label_value_of_rection)
@@ -97,62 +102,85 @@ def Reactions(post_element):
     except:
         pass
 
-def post_time(post_element):
+def post_time(post_element,selector):
     try:
-        date_and_time = post_element.find_element(By.XPATH, ".//span[@class='x1rg5ohu x16dsc37']").text
+        date_and_time = post_element.find_element(By.XPATH, selector['date_and_time']).text
         return date_and_time
     except:
         date_and_time = None
         return date_and_time
 
-def image(driver,post,get_element,counter):
-    # counter = 1
-    # folder = "post_screenshots"
-    # if not os.path.exists(folder):
-    #     os.makedirs(folder)
-
-    # for post in all_posts:
-        #-------element screen short----------#
-        # try:
-        #     filename = f"{folder}/post_{counter}.png"
-        #     post.screenshot(filename)
-        #     print(filename)
-        # except:
-        #     img_link = None
-        #     print(img_link)
+def image(driver,selector,post,get_element,counter):
     try:
-        # img = post.find_element(By.XPATH, ".//div[@class='_ahy5']//img")
-        img = post.find_element(By.XPATH, ".//img")
-        # img_link = img.get_attribute("src")
+        try:
+            img = post.find_element(By.XPATH, selector['img_1'])
+        except:
+            try:
+                img = post.find_element(By.XPATH, selector['img_2'])
+            except:
+                try:
+                    img = post.find_element(By.XPATH, selector['img_3'])
+                except:
+                    img = None
+        # img_link = img.get_attribute("src")   
         img_link = (
             img.get_attribute("src") or
             img.get_attribute("data-src") or
             img.get_attribute("srcset")
             )
-        folder="images"
-        if img_link.startswith("data:image"):
-            if not os.path.exists(folder):
-                os.makedirs(folder)
-            # Split the header from the base64 data
-            date_now = datetime.now().isoformat()
-            formatted_date = datetime.strptime(date_now, "%Y-%m-%dT%H:%M:%S.%f")  # Adjusted format
-            date_now = formatted_date.strftime("%Y-%m-%d %H:%M:%S")
-            # Split the header from the base64 data
-            header, encoded = img_link.split(",", 1)
-            file_ext = header.split(";")[0].split("/")[1]  # e.g., 'png' or 'jpeg'
-            # filename = f"image_{date_now}_{counter}.{file_ext}"
-            filename = f"{folder}/image_{get_element}_{date_now}_{counter}.{file_ext}"
-            
-            img_data = base64.b64decode(encoded)
-            with open(filename, "wb") as f:
-                f.write(img_data)
-            print(f"Image saved as image_from_post.{file_ext}")
+        driver.execute_script("window.open('');")
+        driver.switch_to.window(driver.window_handles[-1])
+        driver.get(img_link)
+        time.sleep(2)
+
+        folder = selector['folder']
+        if not os.path.exists(folder):
+            os.makedirs(folder)
+
+        filename = f"{folder}/post_{get_element}_{counter}.png"
+        driver.save_screenshot(filename)
+        time.sleep(2)
+
+        driver.close()
+        driver.switch_to.window(driver.window_handles[0])
         return filename
     except:
-        img_link = None
-        return img_link
+        filename = None
+        return filename
+    # try:
+    #     # img = post.find_element(By.XPATH, ".//div[@class='_ahy5']//img")
+    #     img = post.find_element(By.XPATH, ".//img[@class='x1c4vz4f x2lah0s xdl72j9 xl1xv1r xh8yej3 x5yr21d']")
+    #     # img_link = img.get_attribute("src")
+    #     img_link = (
+    #         img.get_attribute("src") or
+    #         img.get_attribute("data-src") or
+    #         img.get_attribute("srcset")
+    #         )
+    #     folder="images"
+    #     if img_link.startswith("data:image"):
+    #         if not os.path.exists(folder):
+    #             os.makedirs(folder)
+    #         # Split the header from the base64 data
+    #         date_now = datetime.now().isoformat()
+    #         formatted_date = datetime.strptime(date_now, "%Y-%m-%dT%H:%M:%S.%f")  # Adjusted format
+    #         date_now = formatted_date.strftime("%Y-%m-%d %H:%M:%S")
+    #         # Split the header from the base64 data
+    #         header, encoded = img_link.split(",", 1)
+    #         file_ext = header.split(";")[0].split("/")[1]  # e.g., 'png' or 'jpeg'
+    #         # filename = f"image_{date_now}_{counter}.{file_ext}"
+    #         filename = f"{folder}/image_{get_element}_{date_now}_{counter}.{file_ext}"
+            
+    #         img_data = base64.b64decode(encoded)
+    #         with open(filename, "wb") as f:
+    #             f.write(img_data)
+    #         print(f"Image saved as image_from_post.{file_ext}")
+    #     return filename
+    #     # return img_link
+    # except:
+    #     img_link = None
+    #     return img_link
 
-def text(driver,post):
+def text(driver,selector,post):
     try:
         # Adjust the tag or class as needed for the text element
         # post_text = post.text
@@ -162,7 +190,7 @@ def text(driver,post):
         # post_text = text.text
         # print(post_text)
 
-        span_elem = post.find_element(By.XPATH, ".//span[@class='_ao3e selectable-text copyable-text']")
+        span_elem = post.find_element(By.XPATH, selector['text'])
         html = span_elem.get_attribute("innerHTML")
 
         soup = BeautifulSoup(html, "html.parser")
@@ -180,9 +208,9 @@ def text(driver,post):
         post_text = None
         return post_text
 
-def search_in_box(driver, get_element):
+def search_in_box(driver, get_element,selector):
     try:
-        search_box = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "(//div[@class='x1n2onr6 xh8yej3 lexical-rich-text-input'])[1]//p")))
+        search_box = WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.XPATH, selector['search_box'])))
         search_box.click()
         time.sleep(1)
         search_box.send_keys(Keys.CONTROL + "a")
@@ -192,42 +220,42 @@ def search_in_box(driver, get_element):
     except Exception as e:
         print(f"Error interacting with search box: {e}")
 
-def scrap(driver):
+def scrap(driver,selector):
     Channels = source()
     for channel in Channels:
         driver.execute_script("window.open('');")
         driver.switch_to.window(driver.window_handles[-1])
         driver.get(channel)
 
-        get_element = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "//h3[@class='_9vd5 _9t2_']"))).text #driver.find_element(By.XPATH, "//h3[@class='_9vd5 _9t2_']")
+        get_element = WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.XPATH, selector['get_element']))).text #driver.find_element(By.XPATH, "//h3[@class='_9vd5 _9t2_']")
         print(get_element)
 
         driver.close()
         driver.switch_to.window(driver.window_handles[0])
 
         try:
-            channel_icon = WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.XPATH, "//span[@data-icon='newsletter-outline']")))
+            channel_icon = WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.XPATH, selector['channel_icon'])))
             channel_icon.click()
         except:
             pass
 
-        search_in_box(driver,get_element)
-        new_post_number = number_of_new_posts(driver)
-        click_on_search_result(driver)
-        post_element = collect_post(driver)
+        search_in_box(driver,get_element,selector)
+        new_post_number = number_of_new_posts(driver,selector)
+        click_on_search_result(driver,selector)
+        post_element = collect_post(driver,selector)
         if post_element == None:
             continue
         else:
             counter = 1
             channel_posts = []
             for post in post_element:
-                image_url = image(driver,post,get_element,counter)
+                image_url = image(driver,selector,post,get_element,counter)
                 print(image_url)
-                post_text = text(driver,post)
+                post_text = text(driver,selector,post)
                 print(post_text)
-                postTime = post_time(post)
+                postTime = post_time(post,selector)
                 print(postTime)
-                Number_of_rection = Reactions(post)
+                Number_of_rection = Reactions(post,selector)
                 print(Number_of_rection)
                 counter +=1
                 post_data = create_post_data(channel, image_url, post_text, postTime, Number_of_rection)
@@ -238,44 +266,47 @@ def scrap(driver):
         
         # (//div[@class='_ajv7 x1n2onr6 x1okw0bk x5yr21d x14yjl9h xudhj91 x18nykt9 xww2gxu xlkovuz x16j0l1c xyklrzc x1mh8g0r x1anpbxc x18wx58x xo92w5m'])[2]
 
-def wait_for_chat_element(driver, retries=0, max_retries=10):
+def wait_for_chat_element(driver, selector, retries=0, max_retries=30):
     try:
         time.sleep(1)
-        element = driver.find_element(By.XPATH, "//h1[@class='x1qlqyl8 x1pd3egz xcgk4ki']")
+        element = driver.find_element(By.XPATH, selector['chat_element'])
         print("Element is visible.")
         return True
     except Exception as e:
         print(f"Exception occurred: {e}")
         if retries < max_retries:
             print("Element not yet visible, checking again...")
-            return wait_for_chat_element(driver, retries + 1, max_retries)
+            return wait_for_chat_element(driver, selector, retries + 1, max_retries)
         else:
             print("Max retries reached. Element not found.")
             return False
 
-def is_login(driver):
-    login_status = wait_for_chat_element(driver)
+def is_login(driver,selector):
+    login_status = wait_for_chat_element(driver,selector)
     if login_status == True:
         try:
-            scrap(driver)
+            scrap(driver,selector)
         except Exception as e:
             print(f"Error: {e}")
     else:
         print("Session is not Present. Please scan the QR code.")
         time.sleep(60)
         try:
-            scrap(driver)
+            scrap(driver,selector)
         except Exception as e:
             print(f"Error: {e}")
 
 def source():
-    Channels = ['https://whatsapp.com/channel/0029Va5nZToFSAt56yKM0C1f', 'https://whatsapp.com/channel/0029VaksqICDeON2lLebTt3L', 'https://whatsapp.com/channel/0029VakgKm5LdQeemosdqc0F', 'https://whatsapp.com/channel/0029Va3WSqz4SpkO04ZeQI1j']
+    Channels = ['https://whatsapp.com/channel/0029Vb1u54S60eBnTNoJ8G0H', 'https://whatsapp.com/channel/0029Va3WSqz4SpkO04ZeQI1j', 'https://whatsapp.com/channel/0029Va5nZToFSAt56yKM0C1f', 'https://whatsapp.com/channel/0029VaksqICDeON2lLebTt3L', 'https://whatsapp.com/channel/0029VakgKm5LdQeemosdqc0F']
     return Channels
 
 def main():
-    chrome_profile_path = "/home/mesba/.config/google-chrome/Default"
-    driver = initialize_webdriver(chrome_profile_path)
-    is_login(driver)
+    selector = config()
+    # print(selector['chrome_profile_path'])
+    # chrome_profile_path = "/home/mesba/.config/google-chrome/Default"
+    driver = initialize_webdriver(selector)
+    is_login(driver,selector)
+
     
 if __name__ == "__main__":
     main()

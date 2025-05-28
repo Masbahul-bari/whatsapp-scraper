@@ -1,4 +1,4 @@
-# WhatsApp Channel Scraper
+# WhatsApp Scraper
 
 This project is a Python-based web scraper for WhatsApp Web channels. It uses Selenium to automate browser actions and extract messages, images, reactions number, and other post data from WhatsApp channels.
 

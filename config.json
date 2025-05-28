@@ -1,0 +1,26 @@
+{
+    "XPATH": {
+        "chrome_profile_path": "/home/mesba/.config/google-chrome/Default",
+        "chat_element": "//h1[@class='x1qlqyl8 x1pd3egz xcgk4ki']",
+        "Channels": [
+            "https://whatsapp.com/channel/0029Va5nZToFSAt56yKM0C1f",
+            "https://whatsapp.com/channel/0029VaksqICDeON2lLebTt3L",
+            "https://whatsapp.com/channel/0029VakgKm5LdQeemosdqc0F",
+            "https://whatsapp.com/channel/0029Va3WSqz4SpkO04ZeQI1j"
+        ],
+        "get_element": "//h3[@class='_9vd5 _9t2_']",
+        "channel_icon": "//span[@data-icon='newsletter-outline']",
+        "search_box": "(//div[@class='x1n2onr6 xh8yej3 lexical-rich-text-input'])[1]//p",
+        "number_of_new_posts": "//div[@class='_ahlk']/span",
+        "click_on_search_result": "//span[@class='matched-text _ao3e']",
+        "click_on_Down_Arrow": "//span[@class='x1h7gb8d x1rg5ohu xq77vm1']",
+        "all_posts_elements": "//div[@class='_amjv _aotl']",
+        "img_1": ".//img[@class='x1c4vz4f x2lah0s xdl72j9 xl1xv1r xh8yej3 x5yr21d']",
+        "img_2": ".//img[@class='x15kfjtz x1c4vz4f x2lah0s xdl72j9 x127lhb5 x4afe7t xa3vuyk x10e4vud']",
+        "img_3": ".//img[@class='x15kfjtz x1c4vz4f x2lah0s xdl72j9 x14tgpju']",
+        "folder": "post_screenshots",
+        "text": ".//span[@class='_ao3e selectable-text copyable-text']",
+        "date_and_time": ".//span[@class='x1rg5ohu x16dsc37']",
+        "reaction": ".//button[@class='xo0jvv6']"
+    }
+}
