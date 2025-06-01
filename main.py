@@ -14,7 +14,6 @@ from bs4 import BeautifulSoup,NavigableString
 
 
 
-
 def initialize_webdriver(selector):
     option = Options()
     # option.add_argument("--headless")
@@ -32,14 +31,16 @@ def config():
         data = json.load(f)
         return data['XPATH']
          
-def create_post_data(channel, image_url, post_text, postTime, Number_of_rection):
+def create_post_data(channel, image_url, post_text, postTime, Number_of_rection,number_of_follower, profile_picture_url):
     return{
         "Source_link":channel,
         "Post_text":post_text,
         "Post_image":image_url,
         "Post_time":postTime,
         "Post_reaction":Number_of_rection,
-        "Post_scraping_time":date_time()
+        "Post_scraping_time":date_time(),
+        "Followers": number_of_follower,
+        "Profile_picture": profile_picture_url
     }
 
 def save_channel_posts(channel_name, posts_data, folder="channel_jsons"):
@@ -121,8 +122,7 @@ def image(driver,selector,post,get_element,counter):
                 try:
                     img = post.find_element(By.XPATH, selector['img_3'])
                 except:
-                    img = None
-        # img_link = img.get_attribute("src")   
+                    img = None  
         img_link = (
             img.get_attribute("src") or
             img.get_attribute("data-src") or
@@ -147,49 +147,9 @@ def image(driver,selector,post,get_element,counter):
     except:
         filename = None
         return filename
-    # try:
-    #     # img = post.find_element(By.XPATH, ".//div[@class='_ahy5']//img")
-    #     img = post.find_element(By.XPATH, ".//img[@class='x1c4vz4f x2lah0s xdl72j9 xl1xv1r xh8yej3 x5yr21d']")
-    #     # img_link = img.get_attribute("src")
-    #     img_link = (
-    #         img.get_attribute("src") or
-    #         img.get_attribute("data-src") or
-    #         img.get_attribute("srcset")
-    #         )
-    #     folder="images"
-    #     if img_link.startswith("data:image"):
-    #         if not os.path.exists(folder):
-    #             os.makedirs(folder)
-    #         # Split the header from the base64 data
-    #         date_now = datetime.now().isoformat()
-    #         formatted_date = datetime.strptime(date_now, "%Y-%m-%dT%H:%M:%S.%f")  # Adjusted format
-    #         date_now = formatted_date.strftime("%Y-%m-%d %H:%M:%S")
-    #         # Split the header from the base64 data
-    #         header, encoded = img_link.split(",", 1)
-    #         file_ext = header.split(";")[0].split("/")[1]  # e.g., 'png' or 'jpeg'
-    #         # filename = f"image_{date_now}_{counter}.{file_ext}"
-    #         filename = f"{folder}/image_{get_element}_{date_now}_{counter}.{file_ext}"
-            
-    #         img_data = base64.b64decode(encoded)
-    #         with open(filename, "wb") as f:
-    #             f.write(img_data)
-    #         print(f"Image saved as image_from_post.{file_ext}")
-    #     return filename
-    #     # return img_link
-    # except:
-    #     img_link = None
-    #     return img_link
 
 def text(driver,selector,post):
     try:
-        # Adjust the tag or class as needed for the text element
-        # post_text = post.text
-        #post_text = post.find_element(By.XPATH, ".//span[@class='_ao3e selectable-text copyable-text']").text
-        # print(post_text)
-        # text = post.find_element(By.XPATH, ".//div[@class='_akbu'")  # //div[@class="_akbu"]
-        # post_text = text.text
-        # print(post_text)
-
         span_elem = post.find_element(By.XPATH, selector['text'])
         html = span_elem.get_attribute("innerHTML")
 
@@ -227,7 +187,7 @@ def scrap(driver,selector):
         driver.switch_to.window(driver.window_handles[-1])
         driver.get(channel)
 
-        get_element = WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.XPATH, selector['get_element']))).text #driver.find_element(By.XPATH, "//h3[@class='_9vd5 _9t2_']")
+        get_element = WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.XPATH, selector['get_element']))).text
         print(get_element)
 
         driver.close()
@@ -248,6 +208,8 @@ def scrap(driver,selector):
         else:
             counter = 1
             channel_posts = []
+            number_of_follower = None
+            profile_picture_url = ""
             for post in post_element:
                 image_url = image(driver,selector,post,get_element,counter)
                 print(image_url)
@@ -257,14 +219,33 @@ def scrap(driver,selector):
                 print(postTime)
                 Number_of_rection = Reactions(post,selector)
                 print(Number_of_rection)
+                try:
+                    if counter == 1:
+                        number_of_follower, profile_picture_url = number_of_follower_profile_picture(driver,selector)
+                except:
+                    pass
                 counter +=1
-                post_data = create_post_data(channel, image_url, post_text, postTime, Number_of_rection)
+                post_data = create_post_data(channel, image_url, post_text, postTime, Number_of_rection, number_of_follower, profile_picture_url)
                 channel_posts.append(post_data)
             save_channel_posts(get_element, channel_posts)
-        create_post_data(channel, image_url, post_text, postTime, Number_of_rection)
         input("Enter any key...")
         
         # (//div[@class='_ajv7 x1n2onr6 x1okw0bk x5yr21d x14yjl9h xudhj91 x18nykt9 xww2gxu xlkovuz x16j0l1c xyklrzc x1mh8g0r x1anpbxc x18wx58x xo92w5m'])[2]
+def number_of_follower_profile_picture(driver,selector):
+    try:
+        driver.find_element(By.XPATH, selector['profile']).click()
+        time.sleep(2)
+        follower_text = driver.find_element(By.XPATH, selector['followers']).text
+        # Extract just the number using regex
+        follower_number = re.search(r'(\d{1,3}(?:,\d{3})*)', follower_text)
+        follower = follower_number.group(1) if follower_number else "0"
+        profile_picture = driver.find_element(By.XPATH, selector['profile_picture']).get_attribute("src")
+        driver.find_element(By.XPATH, selector['X_button']).click()
+        return follower,profile_picture
+    except:
+        follower = None
+        return follower
+
 
 def wait_for_chat_element(driver, selector, retries=0, max_retries=30):
     try:

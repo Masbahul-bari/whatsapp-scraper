@@ -21,6 +21,10 @@
         "folder": "post_screenshots",
         "text": ".//span[@class='_ao3e selectable-text copyable-text']",
         "date_and_time": ".//span[@class='x1rg5ohu x16dsc37']",
-        "reaction": ".//button[@class='xo0jvv6']"
+        "reaction": ".//button[@class='xo0jvv6']",
+        "profile": "//div[@id='main']//span[@class='x1iyjqo2 x6ikm8r x10wlt62 x1n2onr6 xlyipyv xuxw1ft x1rg5ohu _ao3e']",
+        "followers": "//div[@class='x1lkfr7t xdbd6k5 x1fcty0u xhgddhk']",
+        "profile_picture": "//div[@class='_ajuf']//img",
+        "X_button": "//div[@class='x1okw0bk x1fxk84t']/div[@role='button']"
     }
 }
