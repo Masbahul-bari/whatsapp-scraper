@@ -31,8 +31,9 @@ def config():
         data = json.load(f)
         return data['XPATH']
          
-def create_post_data(channel, image_url, post_text, postTime, Number_of_rection,number_of_follower, profile_picture_url):
+def create_post_data(get_element, channel, image_url, post_text, postTime, Number_of_rection, number_of_follower, profile_picture_url):
     return{
+        "Source_name":get_element,
         "Source_link":channel,
         "Post_text":post_text,
         "Post_image":image_url,
@@ -158,7 +159,8 @@ def text(driver,selector,post):
         for item in soup.contents:
             if isinstance(item, NavigableString):
                 post_text += item
-            elif item.name == "img":
+            # elif item.name == "img":
+            elif item.findChildren() == "img":    
                 emoji = item.get("data-plain-text") or item.get("alt") or ""
                 post_text += emoji
             elif item.name:
@@ -225,7 +227,7 @@ def scrap(driver,selector):
                 except:
                     pass
                 counter +=1
-                post_data = create_post_data(channel, image_url, post_text, postTime, Number_of_rection, number_of_follower, profile_picture_url)
+                post_data = create_post_data(get_element, channel, image_url, post_text, postTime, Number_of_rection, number_of_follower, profile_picture_url)
                 channel_posts.append(post_data)
             save_channel_posts(get_element, channel_posts)
         input("Enter any key...")
